@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Document</title>
+	<style>
+		body {
+			height: 100%;
+			width: 100%;
+			margin: 0;
+		}
+
+		#canvas {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+	</style>
+</head>
+<body onkeydown="controlSnake(event)">
+	<canvas id="canvas"></canvas>
+	<script>
+			var canvas = document.getElementById('canvas');
+			canvas.width = 500;
+			canvas.height = 500;
+			var context = canvas.getContext('2d');
+			var x = 0,
+				y = 0,
+				width = 20,
+				height = 20,
+				canvasWidth = canvas.width / width,
+				canvasHeight = canvas.height / height,
+				appleBoundaryX = canvasWidth - 1,
+				appleBoundaryY = canvasHeight - 1,
+				key = 39,
+				drawLength,
+				start = 0,
+				snakeLen = 4,
+				apple,
+				score,
+				snakeBody = [],
+				snakeDirection,
+				snakeDirectionNew,
+				waiter = 0,
+				gameLoop;
+
+			function initSnake(){
+				score = 0;
+				snakeDirection = 3;
+				createSnake();
+				createApple();
+				snakeDirectionNew = snakeDirection;
+				gameLoop = requestAnimationFrame(drawWorld);
+			}
+
+			initSnake();
+
+			function createSnake(){
+				snakeBody.length = 0;
+				var startLength = 2;
+				for(var i = startLength-1; i>=0; i--){
+					snakeBody.push({x: i, y: 0});
+				}
+			}
+
+			function drawWorld(){
+				context.clearRect(0, 0, canvas.width, canvas.height);
+				context.strokeRect(0, 0, canvas.width, canvas.height);
+				var nx = snakeBody[0].x;
+				var ny = snakeBody[0].y;
+				for (var i=1; i<snakeBody.length; i++){
+					if (Math.floor(nx) === -1 || Math.floor(nx) === canvasWidth * 4 || Math.floor(ny) === -1 || Math.floor(ny) >= canvasHeight * 4 || Math.floor(nx) === snakeBody[i].x && Math.floor(ny) === snakeBody[i].y){
+						initSnake();
+						return;
+					}
+				}
+
+				if (Math.floor(nx) % 4 === 0 && Math.floor(ny) % 4 === 0){
+					snakeDirection = snakeDirectionNew;
+				}
+
+				switch (snakeDirection){
+					case 1:
+						nx--;
+						break;
+					case 2:
+						ny--;
+						break;
+					case 3:
+						nx++;
+						break;
+					case 4:
+						ny++;
+						break;
+					default:
+						break;
+				}
+
+				// console.log("X: " + Math.floor(nx) + " Y: " + Math.floor(ny));
+
+				var tail = {
+					x: 0,
+					y: 0
+				};
+				drawApple();
+				if (nx / 4 === apple.x && ny / 4 === apple.y){
+					tail.x = nx;
+					tail.y = ny;
+					createApple();
+					waiter++;
+					score++
+				} else if (waiter !== 0 && waiter < 7){
+					tail.x = nx;
+					tail.y = ny;
+					waiter++;
+				} else if (waiter >= 7 || waiter === 0){
+					tail = snakeBody.pop();
+					tail.x = nx;
+					tail.y = ny;
+					waiter = 0;
+				}
+
+				snakeBody.unshift(tail);
+
+				for(var i=0; i<snakeBody.length; i++){
+					drawBodyCell(snakeBody[i].x, snakeBody[i].y);
+				}
+
+				var scoreText = "Pisteet: " + score;
+				context.fillStyle = "black";
+				context.fillText(scoreText, 10, 20);
+				requestAnimationFrame(drawWorld);
+			}
+
+			function createApple(){
+				apple = {
+					x: Math.floor(Math.random() * (appleBoundaryX - 0 + 1) + 0),
+					y: Math.floor(Math.random() * (appleBoundaryY - 0 + 1) + 0)
+				}
+			}
+
+			function drawBodyCell(cx, cy){
+				context.fillStyle = 'black';
+				context.fillRect(cx*5, cy*5, width, height);
+			}
+
+			function drawApple(){
+				context.fillStyle = 'red';
+				context.fillRect(apple.x*width, apple.y*height, width, height);
+			}
+
+			function controlSnake(keyEvent){
+				keyEvent.preventDefault && keyEvent.preventDefault();
+				key = keyEvent.keyCode;
+				if (key === 37 && snakeDirection !== 3){
+					snakeDirectionNew = 1;
+				} else if (key === 38 && snakeDirection !== 4){
+					snakeDirectionNew = 2;
+				} else if (key === 39 && snakeDirection !== 1){
+					snakeDirectionNew = 3;
+				} else if (key === 40 && snakeDirection !== 2){
+					snakeDirectionNew = 4;
+				}
+			}
+
+			// keyCodes
+			// 37 = left
+			// 38 = up
+			// 39 = right
+			// 40 = down
+
+			// snakeDirection:
+			// 1 = left
+			// 2 = up
+			// 3 = right
+			// 4 = down
+		</script>
+</body>
+</html>
